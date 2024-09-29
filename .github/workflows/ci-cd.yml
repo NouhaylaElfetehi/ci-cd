@@ -34,12 +34,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build Docker image
-        run: |
+        run:  |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             TAG="dev"
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
             # Extraire la partie après "refs/tags/"
-            TAG="${{ github.ref }}" 
+            TAG="${{ github.ref }}"
             TAG="${TAG#refs/tags/}"
           else
             # Extraire la partie après "refs/heads/"
@@ -47,8 +47,7 @@ jobs:
             TAG="${TAG#refs/heads/}"
             TAG="${TAG//\//-}"  # Remplacer les / par des tirets pour Docker
           fi
-          echo "Building Docker image with tag: $TAG"
-          docker build -t my-app:${TAG} .
+          docker push my-app:${TAG}
 
       - name: Log in to Docker Hub
         run: |
