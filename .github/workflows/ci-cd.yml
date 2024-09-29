@@ -35,29 +35,36 @@ jobs:
 
       - name: Build Docker image
         run: |
-          # Manipulation des branches et des tags
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             TAG="dev"
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Utiliser une expression shell pour extraire la partie après "refs/tags/"
-            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
+            # Extraire la partie après "refs/tags/"
+            TAG="${{ github.ref }}" 
+            TAG="${TAG#refs/tags/}"
           else
-            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
+            # Extraire la partie après "refs/heads/"
+            TAG="${{ github.ref }}"
+            TAG="${TAG#refs/heads/}"
+            TAG="${TAG//\//-}"  # Remplacer les / par des tirets pour Docker
           fi
           echo "Building Docker image with tag: $TAG"
-          docker build -t docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG} .
+          docker build -t my-app:${TAG} .
 
       - name: Log in to Docker Hub
         run: |
-          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
 
       - name: Push Docker image
         run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-            echo "DOCKER_USERNAME secret is not set"
-            exit 1
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            TAG="dev"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref#refs/tags/ }}"   # Pour les tags Git
+          else
+            TAG="${{ github.ref#refs/heads/ }}"  # Pour les branches
+            TAG="${TAG//\//-}"                   # Remplacer / par des tirets
           fi
-          docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
+          docker build -t my-app:${TAG} .
 
       - name: Notify Google Chat
         run: |
