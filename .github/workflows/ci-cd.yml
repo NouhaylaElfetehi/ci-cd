@@ -43,10 +43,9 @@ jobs:
           docker build -t my-app:${TAG} .
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        run:
+          docker login -u nouhaylafth -p ${{secrets.DOCKER_HUB_TOKEN}}
+        
 
       - name: Push Docker image
         run: |
