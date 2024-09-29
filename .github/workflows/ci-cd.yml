@@ -48,7 +48,15 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push my-app:${TAG}
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            TAG="dev"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref#refs/tags/ }}"   # Pour les tags Git
+          else
+            TAG="${{ github.ref#refs/heads/ }}"  # Pour les branches
+            TAG="${TAG//\//-}"                   # Remplacer / par des tirets
+          fi
+          docker build -t my-app:${TAG} .
 
       - name: Notify Google Chat
         run: |
