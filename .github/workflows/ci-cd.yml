@@ -26,7 +26,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-
   build:
     runs-on: ubuntu-latest
     needs: test
@@ -36,13 +35,14 @@ jobs:
 
       - name: Build Docker image
         run: |
+          # Manipulation des branches et des tags
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             TAG="dev"
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            TAG="${{ github.ref#refs/tags/}}"
+            # Utiliser une expression shell pour extraire la partie après "refs/tags/"
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
           else
-            TAG="${{ github.ref#refs/heads/}}"
-            TAG="${TAG//\//-}"
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
           fi
           echo "Building Docker image with tag: $TAG"
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG} .
@@ -58,7 +58,6 @@ jobs:
             exit 1
           fi
           docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
-
 
       - name: Notify Google Chat
         run: |
