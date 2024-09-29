@@ -35,16 +35,20 @@ jobs:
 
       - name: Build Docker image
         run: |
+          # Set the tag based on the ref
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             TAG="dev"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
           else
-            TAG="${{ github.ref }}"
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
           fi
+          echo "Building Docker image with tag: $TAG"
           docker build -t my-app:${TAG} .
 
       - name: Log in to Docker Hub
         run: |
-            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
 
       - name: Push Docker image
         run: |
