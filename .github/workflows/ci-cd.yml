@@ -44,7 +44,7 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
-          docker login -u "nouhaylaelfetehi" -p "NouhaylaElf" 
+            docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
 
       - name: Push Docker image
         run: |
