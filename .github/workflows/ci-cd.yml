@@ -43,9 +43,8 @@ jobs:
           docker build -t my-app:${TAG} .
 
       - name: Log in to Docker Hub
-        run:
-          docker login -u nouhaylafth -p ${{secrets.DOCKER_HUB_TOKEN}}
-        
+        run: |
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
       - name: Push Docker image
         run: |
