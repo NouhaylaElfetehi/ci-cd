@@ -59,6 +59,7 @@ jobs:
         run: |
           docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
 
+
       - name: Notify Google Chat
         run: |
           curl -X POST -H 'Content-Type: application/json' \
