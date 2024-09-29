@@ -37,13 +37,10 @@ jobs:
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             TAG="dev"
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            TAG="${{ github.ref#refs/tags/ }}"
           else
-            TAG="${{ github.ref#refs/heads/ }}"
+            TAG="${{ github.ref }}"
           fi
           docker build -t my-app:${TAG} .
-
 
       - name: Log in to Docker Hub
         run: |
