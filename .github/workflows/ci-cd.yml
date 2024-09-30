@@ -50,12 +50,21 @@ jobs:
         run: |
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
 
+      - name: Set Docker username
+        run: echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_ENV
+
       - name: Push Docker image
         run: |
           if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-          echo "DOCKER_USERNAME is not set or empty."
-          exit 1
+            echo "DOCKER_USERNAME is not set or empty."
+            exit 1
           fi
+
+          if [ -z "${TAG}" ]; then
+            echo "TAG is not set or empty."
+            exit 1
+          fi
+
           docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
 
 
