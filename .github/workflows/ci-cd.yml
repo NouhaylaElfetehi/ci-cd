@@ -48,16 +48,16 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
+
+      - name: Push Docker image
+        run: |
           if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
           echo "DOCKER_USERNAME is not set or empty."
           exit 1
           fi
           docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
 
-
-      - name: Push Docker image
-        run: |
-          docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
 
       - name: Notify Google Chat
         run: |
