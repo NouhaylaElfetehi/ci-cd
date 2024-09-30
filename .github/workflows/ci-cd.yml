@@ -48,6 +48,8 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+          echo "DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}"
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}"
 
       - name: Push Docker image
@@ -62,6 +64,7 @@ jobs:
             exit 1
           fi
 
+          echo "Pushing Docker image with tag: ${TAG}"
           docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
 
       - name: Notify Google Chat
@@ -90,4 +93,10 @@ jobs:
 
       - name: Update image
         run: |
+          if [ -z "${TAG}" ]; then
+            echo "TAG is not set or empty."
+            exit 1
+          fi
+          echo "Updating image in Kubernetes with tag: ${TAG}"
           kubectl set image deployment/my-app my-app=my-app:${TAG}
+
