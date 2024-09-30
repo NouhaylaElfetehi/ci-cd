@@ -47,15 +47,18 @@ jobs:
           docker build -t my-app:${TAG} .
 
       - name: Log in to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
-          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}" 
-
-      - name: Set Docker username
-        run: echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_ENV
+          docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_HUB_TOKEN}"
 
       - name: Push Docker image
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          TAG: ${{ steps.build.outputs.TAG }}
         run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+          if [ -z "${DOCKER_USERNAME}" ]; then
             echo "DOCKER_USERNAME is not set or empty."
             exit 1
           fi
@@ -65,8 +68,7 @@ jobs:
             exit 1
           fi
 
-          docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
-
+          docker push docker.io/${DOCKER_USERNAME}/my-app:${TAG}
 
       - name: Notify Google Chat
         run: |
