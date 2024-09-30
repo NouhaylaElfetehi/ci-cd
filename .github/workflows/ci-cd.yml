@@ -52,7 +52,7 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
+          docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
 
       - name: Notify Google Chat
         run: |
