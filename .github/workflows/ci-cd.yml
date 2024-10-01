@@ -54,21 +54,24 @@ jobs:
           echo "DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}"
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}"
 
-      - name: Push Docker image
+      - name: Build and push Docker image to Docker Hub
         run: |
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-            echo "DOCKER_USERNAME is not set or empty."
-            exit 1
+          # Set the tag based on the ref
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            TAG="dev"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
+          else
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
           fi
+          echo "Building Docker image with tag: $TAG"
 
-          if [ -z "${TAG}" ]; then
-            echo "TAG is not set or empty."
-            exit 1
-          fi
-
-          echo "Pushing Docker image with tag: ${TAG}"
-          docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
-
+          # Build the Docker image using Docker Buildx to push directly to Docker Hub
+          docker buildx create --use
+          docker buildx build --push \
+            --platform linux/amd64,linux/arm64 \
+            --tag docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG} .
+            
       - name: Notify Google Chat
         run: |
           curl -X POST -H 'Content-Type: application/json' \
