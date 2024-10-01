@@ -26,15 +26,27 @@ jobs:
       - name: Run tests
         run: npm test
 
-  build: 
+  build:
     runs-on: ubuntu-latest
     needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      - name: Build Docker image
+        run: |
+          # Set the tag based on the ref
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            TAG="dev"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
+          else
+            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
+          fi
+          echo "Building Docker image with tag: $TAG"
+          docker build -t my-app:${TAG} .
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
 
       - name: Log in to Docker Hub
         run: |
@@ -42,28 +54,26 @@ jobs:
           echo "DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}"
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}"
 
-      - name: Build and push Docker image
+      - name: Push Docker image
         run: |
-          # Set the tag based on the ref
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            TAG="latest"
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
-          else
-            TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+            echo "DOCKER_USERNAME is not set or empty."
+            exit 1
           fi
-          echo "Building and pushing Docker image with tag: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          # Build and push the Docker image in one step using Docker Buildx
-          docker buildx build --push \
-            --platform linux/amd64,linux/arm64 \
-            --tag docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG} .
-          
+
+          if [ -z "${TAG}" ]; then
+            echo "TAG is not set or empty."
+            exit 1
+          fi
+
+          echo "Pushing Docker image with tag: ${TAG}"
+          docker push docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:${TAG}
+
       - name: Notify Google Chat
         run: |
           curl -X POST -H 'Content-Type: application/json' \
           -d '{
-                "text": "Pipeline Status: ${{ job.status }}\nCommit: ${{ github.sha }}\nTag: '"${TAG}"'"
+                "text": "Pipeline Status: ${{ job.status }}\nCommit: ${{ github.sha }}"
               }' ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
 
   deploy:
@@ -91,3 +101,4 @@ jobs:
           fi
           echo "Updating image in Kubernetes with tag: ${TAG}"
           kubectl set image deployment/my-app my-app=my-app:${TAG}
+
