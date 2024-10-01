@@ -53,7 +53,7 @@ jobs:
             TAG=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///' | sed 's/\//-/g')
           fi
           echo "Building and pushing Docker image with tag: $TAG"
-        
+          echo "TAG=$TAG" >> $GITHUB_ENV
           # Build and push the Docker image in one step using Docker Buildx
           docker buildx build --push \
             --platform linux/amd64,linux/arm64 \
